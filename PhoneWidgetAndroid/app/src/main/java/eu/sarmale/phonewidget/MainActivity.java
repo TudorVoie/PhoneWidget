@@ -1,9 +1,11 @@
 package eu.sarmale.phonewidget;
 
+import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.media.AudioManager;
 import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -88,6 +90,8 @@ public class MainActivity extends AppCompatActivity {
                         Map<?, ?> msg = (Map<?, ?>) list.get(0);
                         if ("info".equals(msg.get("cmd"))) {
                             sendInfo();
+                        } else if("silent".equals(msg.get("cmd"))) {
+                            setSilent();
                         }
                     }
                 });
@@ -106,6 +110,25 @@ public class MainActivity extends AppCompatActivity {
         public void onSdkShutDown() {
         }
     };
+
+    private void setSilent() {
+        NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+        if (nm != null && !nm.isNotificationPolicyAccessGranted()) {
+            runOnUiThread(() -> textViewStatus.setText("Need DND permission - opening settings"));
+            Intent intent = new Intent(android.provider.Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS);
+            startActivity(intent);
+            return;
+        }
+
+        try {
+            AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+            am.setRingerMode(AudioManager.RINGER_MODE_SILENT);
+            runOnUiThread(() -> textViewStatus.setText("Silenced"));
+        } catch (SecurityException e) {
+            runOnUiThread(() -> textViewStatus.setText("Silent failed: " + e.getMessage()));
+        }
+    }
 
     private int getCurrentBatteryPercent() {
         IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);

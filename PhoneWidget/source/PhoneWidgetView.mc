@@ -5,6 +5,9 @@ import Toybox.System;
 
 class PhoneWidgetView extends WatchUi.View {
 
+    var page = 0;
+    var pages = 1;
+
     var phoneBattery = "---";
     var phoneName = "---";
     var requestSent = false;
@@ -59,7 +62,29 @@ class PhoneWidgetView extends WatchUi.View {
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_BLACK);
         dc.clear();
 
-        dc.drawText(dc.getWidth() / 2, dc.getHeight() / 2 - 45, Graphics.FONT_TINY, phoneName, Graphics.TEXT_JUSTIFY_CENTER);
+        //dc.drawText(dc.getWidth() / 2, dc.getHeight() / 2 - 45, Graphics.FONT_TINY, phoneName, Graphics.TEXT_JUSTIFY_CENTER);
+        if(page == 0) {
+            batteryPage(dc);
+        } else if(page == 1) {
+            volumePage(dc);
+        }
+        
+    }
+
+    // Called when this View is removed from the screen.
+    function onHide() as Void {
+    }
+
+    function volumePage(dc as Dc) as Void {
+        dc.drawText(dc.getWidth() / 2, dc.getHeight() / 2 - 45, Graphics.FONT_TINY, "Volume", Graphics.TEXT_JUSTIFY_CENTER);
+    }
+
+    function sendSilent() {
+        Communications.transmit({"cmd" => "silent"}, {}, new TxListener());
+    }
+
+    function batteryPage(dc as Dc) as Void {
+        dc.drawText(dc.getWidth() / 2, dc.getHeight() / 2 - 45, Graphics.FONT_TINY, "Battery", Graphics.TEXT_JUSTIFY_CENTER);
 
         try {
             var percentage = phoneBattery.toNumber();
@@ -72,8 +97,6 @@ class PhoneWidgetView extends WatchUi.View {
             
         }
         
-        
-
         dc.drawText(dc.getWidth() / 2, dc.getHeight() / 2, Graphics.FONT_LARGE, phoneBattery + "%", Graphics.TEXT_JUSTIFY_CENTER);
         if(charghing == 1) {
             dc.setColor(Graphics.COLOR_YELLOW, Graphics.COLOR_BLACK);
@@ -81,8 +104,13 @@ class PhoneWidgetView extends WatchUi.View {
         }
     }
 
-    // Called when this View is removed from the screen.
-    function onHide() as Void {
+    function nextPage() as Void {
+        if(page == pages) {
+            page = 0;
+        } else {
+            page++;
+        }
+        WatchUi.requestUpdate();
     }
 
 }
