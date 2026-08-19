@@ -40,7 +40,7 @@ class PhoneWidgetGarminApp extends Application.AppBase {
             }
             _strings[0] = data.toString();
         }
-
+        
         WatchUi.requestUpdate();
     }
 

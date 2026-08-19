@@ -1,5 +1,10 @@
 package eu.sarmale.phonewidgetandroid
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.os.BatteryManager
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -34,6 +39,34 @@ class MainActivity : ComponentActivity() {
     private val lastMessage = mutableStateOf("Waiting for a message from the watch...")
     private var knownDevices: List<IQDevice> = emptyList()
 
+    private var lastBattery = -1
+
+    private val batteryReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            sendBattery(getBatteryPercentage(intent))
+        }
+    }
+
+    private fun getBatteryPercentage(intent: Intent): Int {
+        val level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
+        val scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
+        return (level * 100) / scale
+    }
+
+    private fun sendBattery(pct: Int) {
+        if(pct < 0 || pct == lastBattery) return
+        lastBattery = pct
+        knownDevices.forEach { device ->
+            try {
+                connectIQ.sendMessage(device, myApp, pct) { _, _, status ->
+
+                }
+            } catch (_: InvalidStateException) {
+            } catch (_: ServiceUnavailableException) {
+            }
+        }
+    }
+
     private val connectIQListener: ConnectIQ.ConnectIQListener =
         object : ConnectIQ.ConnectIQListener {
             override fun onInitializeError(errStatus: ConnectIQ.IQSdkErrorStatus) {
@@ -44,6 +77,8 @@ class MainActivity : ComponentActivity() {
             override fun onSdkReady() {
                 isSdkReady = true
                 loadDevices()
+
+                sendBattery(67)
             }
 
             override fun onSdkShutDown() {
@@ -75,6 +110,10 @@ class MainActivity : ComponentActivity() {
         if (isSdkReady) {
             loadDevices()
         }
+
+        val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
+        val stickyIntent = registerReceiver(batteryReceiver, filter)
+        stickyIntent?.let { sendBattery(getBatteryPercentage(it)) }
     }
 
     override fun onPause() {
@@ -85,6 +124,8 @@ class MainActivity : ComponentActivity() {
             }
         } catch (_: InvalidStateException) {
         }
+
+        unregisterReceiver(batteryReceiver)
     }
 
     public override fun onDestroy() {

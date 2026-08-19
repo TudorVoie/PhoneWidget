@@ -24,14 +24,37 @@ class CommListener extends Communications.ConnectionListener {
 
 class PhoneWidgetGarminDelegate extends WatchUi.BehaviorDelegate {
 
+    // How long (ms) counts as a "hold" vs a quick tap
+    private const HOLD_THRESHOLD_MS = 600;
+    private var _pressStartTime as Number = 0;
+
     public function initialize() {
         BehaviorDelegate.initialize();
     }
 
-    // Fires on the physical "Start"/Select button
-    public function onSelect() as Boolean {
-        var listener = new $.CommListener();
-        Communications.transmit("Hello World", null, listener);
-        return true;
+    // Fires the instant the Start/Select button goes down
+    public function onKeyPressed(keyEvent as WatchUi.KeyEvent) as Boolean {
+        if (keyEvent.getKey() == WatchUi.KEY_ENTER) {
+            _pressStartTime = System.getTimer();
+            return true;
+        }
+        return false;
+    }
+
+    // Fires when the Start/Select button is released - here we decide
+    // whether it was a quick tap or a hold, and send accordingly
+    public function onKeyReleased(keyEvent as WatchUi.KeyEvent) as Boolean {
+        if (keyEvent.getKey() == WatchUi.KEY_ENTER) {
+            var heldDuration = System.getTimer() - _pressStartTime;
+            var listener = new $.CommListener();
+
+            if (heldDuration >= HOLD_THRESHOLD_MS) {
+                Communications.transmit("Held Hello World", null, listener);
+            } else {
+                Communications.transmit("Hello World", null, listener);
+            }
+            return true;
+        }
+        return false;
     }
 }
