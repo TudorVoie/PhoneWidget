@@ -28,13 +28,15 @@ class PhoneWidgetGarminView extends WatchUi.View {
         var strings = (Application.getApp() as PhoneWidgetGarminApp).getStrings();
         var raw = strings[0];
 
-        // Only update phoneBattery if we actually have a parseable number.
-        // toNumber() returns null (not an exception) on empty/invalid input,
-        // so we have to check for that explicitly.
         if (raw != null && !raw.equals("")) {
-            var num = raw.toNumber();
-            if (num != null) {
-                phoneBattery = num.toString() + "%";
+            if (raw.find("BATTERY:") == 0) {
+                var value = raw.substring(8, raw.length());
+                var num = value.toNumber();
+                if (num != null) {
+                    phoneBattery = num.toString() + "%";
+                }
+            } else if (raw.find("RINGER:") == 0) {
+                ringerMode = raw.substring(7, raw.length());
             }
         }
 
