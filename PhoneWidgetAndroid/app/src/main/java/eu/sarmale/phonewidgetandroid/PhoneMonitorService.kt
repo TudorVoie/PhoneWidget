@@ -129,7 +129,7 @@ class PhoneMonitorService : Service() {
     private fun listenByMyAppEvents(device: IQDevice) {
         try {
             connectIQ.registerForAppEvents(device, myApp) { _, _, message, _ ->
-                PhoneMonitorState.lastMessage.value = message.joinToString(", ")
+                //PhoneMonitorState.lastMessage.value = message.joinToString(", ")
             }
         } catch (_: InvalidStateException) {
         } catch (_: ServiceUnavailableException) {
@@ -169,8 +169,6 @@ class PhoneMonitorService : Service() {
         if (mode == lastRingerMode) return
         lastRingerMode = mode
 
-        // Some OEM ROMs (e.g. Samsung) report VIBRATE for what the UI shows as
-        // "Silent," so silent and vibrate are combined into one state here.
         val send = when (mode) {
             AudioManager.RINGER_MODE_SILENT, AudioManager.RINGER_MODE_VIBRATE -> "silent"
             AudioManager.RINGER_MODE_NORMAL -> "normal"
@@ -184,6 +182,16 @@ class PhoneMonitorService : Service() {
             } catch (_: ServiceUnavailableException) {
             }
         }
+    }
+
+    private fun silentringermode() {
+        val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        audioManager.ringerMode = AudioManager.RINGER_MODE_SILENT
+    }
+
+    private fun normalringermode() {
+        val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        audioManager.ringerMode = AudioManager.RINGER_MODE_NORMAL
     }
 
     private fun createNotificationChannel() {

@@ -1,53 +1,51 @@
 package eu.sarmale.phonewidgetandroid
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
+import android.view.Menu
+import android.view.MenuItem
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.core.app.ActivityCompat
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import eu.sarmale.phonewidgetandroid.ui.theme.PhoneWidgetAndroidTheme
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
 
     private val notificationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) {
-            // Foreground service still runs even if this is denied; the
-            // notification just won't be visible on Android 13+.
+
             startMonitorService()
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
 
-        setContent {
-            PhoneWidgetAndroidTheme {
-                Scaffold { padding ->
-                    Box(modifier = Modifier.fillMaxSize().padding(padding)) {
-                        MessageScreen()
-                    }
-                }
-            }
-        }
+        setContentView(R.layout.activity_main)
+
+        supportActionBar?.title = "Phone Widget"
 
         ensureServiceRunning()
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.main_menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.checksilencepermissions -> {
+                checksilencepermissions()
+                true
+            }
+
+
+            else -> super.onOptionsItemSelected(item)
+        }
     }
 
     private fun ensureServiceRunning() {
@@ -65,10 +63,42 @@ class MainActivity : ComponentActivity() {
         val intent = Intent(this, PhoneMonitorService::class.java)
         ContextCompat.startForegroundService(this, intent)
     }
+
+    private fun hasNotificationPolicyAccess(): Boolean {
+        val notificationManager =
+            getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+
+        return notificationManager.isNotificationPolicyAccessGranted
+    }
+
+    private fun openNotificationPolicySettings() {
+        val intent = Intent(
+            android.provider.Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS
+        )
+        startActivity(intent)
+    }
+
+    private fun checksilencepermissions() {
+        if (!hasNotificationPolicyAccess()) {
+            val builder: AlertDialog.Builder = AlertDialog.Builder(this)
+            builder.setMessage("Do you want to set Do Not Disturb permissions now?").setTitle("No Do Not Disturb Permissions")
+                .setNegativeButton("No", null)
+                .setPositiveButton("Yes") {_, _ ->
+                    openNotificationPolicySettings()
+                }
+
+            val dialog: AlertDialog = builder.create()
+            dialog.show()
+
+            return
+        } else {
+            val builder: AlertDialog.Builder = AlertDialog.Builder(this)
+            builder.setMessage("No further actions needed.").setTitle("Permissions are granted.")
+                .setNeutralButton("OK", null)
+
+            val dialog: AlertDialog = builder.create()
+            dialog.show()
+        }
+    }
 }
 
-@Composable
-fun MessageScreen() {
-    val message by PhoneMonitorState.lastMessage.collectAsState()
-    Text(text = message, fontSize = 20.sp, modifier = Modifier.padding(16.dp))
-}
