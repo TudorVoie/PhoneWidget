@@ -25,6 +25,8 @@ class PhoneMonitorService : Service() {
     companion object {
         private const val CHANNEL_ID = "phone_monitor_channel"
         private const val NOTIFICATION_ID = 1001
+
+        // Must match the app id / uuid of the app running on the watch
         private const val WATCH_APP_ID = "f7b66f8b-12df-4e2a-8aab-e754bda5bd62"
     }
 
@@ -131,6 +133,8 @@ class PhoneMonitorService : Service() {
                 if(message.joinToString (", ") == "silent") silentringermode()
                 else if(message.joinToString(", ") == "normal") normalringermode()
                 else if(message.joinToString(", ") == "sendinfo") {
+                    lastBattery = -1
+                    lastRingerMode = -1
                     sendBattery(getCurrentBatteryPercentage())
                     sendRingerMode()
                 }
@@ -173,6 +177,8 @@ class PhoneMonitorService : Service() {
         if (mode == lastRingerMode) return
         lastRingerMode = mode
 
+        // Some OEM ROMs (e.g. Samsung) report VIBRATE for what the UI shows as
+        // "Silent," so silent and vibrate are combined into one state here.
         val send = when (mode) {
             AudioManager.RINGER_MODE_SILENT, AudioManager.RINGER_MODE_VIBRATE -> "silent"
             AudioManager.RINGER_MODE_NORMAL -> "normal"
@@ -182,6 +188,7 @@ class PhoneMonitorService : Service() {
         knownDevices.forEach { device ->
             try {
                 connectIQ.sendMessage(device, myApp, "RINGER:$send") { _, _, _ -> }
+                connectIQ.sendMessage(device, myApp, "BATTERY:${getCurrentBatteryPercentage()}") { _, _, _ -> }
             } catch (_: InvalidStateException) {
             } catch (_: ServiceUnavailableException) {
             }
