@@ -48,10 +48,14 @@ class PhoneWidgetGarminDelegate extends WatchUi.BehaviorDelegate {
             var heldDuration = System.getTimer() - _pressStartTime;
             var listener = new $.CommListener();
 
+            
+
             if (heldDuration >= HOLD_THRESHOLD_MS) {
-                Communications.transmit("Held Hello World", null, listener);
+                //Communications.transmit("Held Hello World", null, listener);
+                Communications.transmit("silent", null, listener);
             } else {
-                Communications.transmit("Hello World", null, listener);
+                //Communications.transmit("Hello World", null, listener);
+                Communications.transmit("normal", null, listener);
             }
             return true;
         }

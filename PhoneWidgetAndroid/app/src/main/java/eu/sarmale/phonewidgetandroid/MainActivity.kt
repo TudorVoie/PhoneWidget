@@ -81,7 +81,7 @@ class MainActivity : AppCompatActivity() {
     private fun checksilencepermissions() {
         if (!hasNotificationPolicyAccess()) {
             val builder: AlertDialog.Builder = AlertDialog.Builder(this)
-            builder.setMessage("Do you want to set Do Not Disturb permissions now?").setTitle("No Do Not Disturb Permissions")
+            builder.setMessage("Do you want to set Do Not Disturb permissions now?").setTitle("No Do Not Disturb Permissions.")
                 .setNegativeButton("No", null)
                 .setPositiveButton("Yes") {_, _ ->
                     openNotificationPolicySettings()

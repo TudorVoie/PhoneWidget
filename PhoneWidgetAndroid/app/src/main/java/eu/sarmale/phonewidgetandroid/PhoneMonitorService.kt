@@ -25,8 +25,6 @@ class PhoneMonitorService : Service() {
     companion object {
         private const val CHANNEL_ID = "phone_monitor_channel"
         private const val NOTIFICATION_ID = 1001
-
-        // Must match the app id / uuid of the app running on the watch
         private const val WATCH_APP_ID = "f7b66f8b-12df-4e2a-8aab-e754bda5bd62"
     }
 
@@ -130,6 +128,12 @@ class PhoneMonitorService : Service() {
         try {
             connectIQ.registerForAppEvents(device, myApp) { _, _, message, _ ->
                 //PhoneMonitorState.lastMessage.value = message.joinToString(", ")
+                if(message.joinToString (", ") == "silent") silentringermode()
+                else if(message.joinToString(", ") == "normal") normalringermode()
+                else if(message.joinToString(", ") == "sendinfo") {
+                    sendBattery(getCurrentBatteryPercentage())
+                    sendRingerMode()
+                }
             }
         } catch (_: InvalidStateException) {
         } catch (_: ServiceUnavailableException) {
