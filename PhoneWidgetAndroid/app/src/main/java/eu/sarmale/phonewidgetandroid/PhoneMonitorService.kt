@@ -10,6 +10,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.media.AudioManager
+import android.net.wifi.WifiManager
 import android.os.BatteryManager
 import android.os.Build
 import android.os.IBinder
@@ -130,8 +131,8 @@ class PhoneMonitorService : Service() {
         try {
             connectIQ.registerForAppEvents(device, myApp) { _, _, message, _ ->
                 //PhoneMonitorState.lastMessage.value = message.joinToString(", ")
-                if(message.joinToString (", ") == "silent") silentringermode()
-                else if(message.joinToString(", ") == "normal") normalringermode()
+                if(message.joinToString (", ") == "silent") setRingerMode(0)
+                else if(message.joinToString(", ") == "normal") setRingerMode(2)
                 else if(message.joinToString(", ") == "sendinfo") {
                     lastBattery = -1
                     lastRingerMode = -1
@@ -172,6 +173,29 @@ class PhoneMonitorService : Service() {
         return audioManager.ringerMode
     }
 
+    private fun togglevolume() {
+        val mode = getRingerMode()
+        if(mode == AudioManager.RINGER_MODE_SILENT || mode == AudioManager.RINGER_MODE_VIBRATE)
+        {
+            val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            audioManager.ringerMode = AudioManager.RINGER_MODE_NORMAL
+        } else if(mode == AudioManager.RINGER_MODE_NORMAL)
+        {
+            val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            audioManager.ringerMode = AudioManager.RINGER_MODE_SILENT
+        }
+    }
+
+    private fun getwifi() : Boolean {
+        val wifi = applicationContext.getSystemService(WIFI_SERVICE) as WifiManager
+        return wifi.isWifiEnabled
+    }
+
+    private fun togglewifi() {
+        val wifi = applicationContext.getSystemService(WIFI_SERVICE) as WifiManager
+        wifi.isWifiEnabled = !wifi.isWifiEnabled
+    }
+
     private fun sendRingerMode() {
         val mode = getRingerMode()
         if (mode == lastRingerMode) return
@@ -195,6 +219,7 @@ class PhoneMonitorService : Service() {
         }
     }
 
+    /*
     private fun silentringermode() {
         val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
         audioManager.ringerMode = AudioManager.RINGER_MODE_SILENT
@@ -203,6 +228,12 @@ class PhoneMonitorService : Service() {
     private fun normalringermode() {
         val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
         audioManager.ringerMode = AudioManager.RINGER_MODE_NORMAL
+    }
+    */
+
+    private fun setRingerMode(x : Int) {
+        val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        audioManager.ringerMode = x
     }
 
     private fun createNotificationChannel() {

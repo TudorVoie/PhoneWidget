@@ -3,7 +3,10 @@ import Toybox.Lang;
 import Toybox.WatchUi;
 import Toybox.System;
 import Toybox.Communications;
+import Toybox.Background;
+import Toybox.Time;
 
+(:glance, :background)
 class PhoneWidgetGarminApp extends Application.AppBase {
 
     private var _phoneMethod as Method(msg as PhoneAppMessage) as Void;
@@ -28,8 +31,24 @@ class PhoneWidgetGarminApp extends Application.AppBase {
 
     // Return the initial view of your application here
     function getInitialView() as [Views] or [Views, InputDelegates] {
+        if (Toybox has :Background) {
+            Background.registerForTemporalEvent(new Time.Duration(5 * 60));
+            if (Background has :registerForPhoneAppMessageEvent) {
+                Background.registerForPhoneAppMessageEvent();
+            }
+        }
         return [ new PhoneWidgetGarminView(), new PhoneWidgetGarminDelegate() ];
     }
+
+    function getServiceDelegate() as [System.ServiceDelegate] {
+        return [ new PhoneWidgetGarminServiceDelegate() ];
+    }
+
+    function getGlanceView() {
+        return [ new PhoneWidgetGarminGlanceView() ];
+    }
+
+    
 
     public function onPhone(msg as PhoneAppMessage) as Void {
         var data = msg.data;

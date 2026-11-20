@@ -82,6 +82,8 @@ class PhoneWidgetGarminView extends WatchUi.View {
             pornit = 0;
             myTimer.stop();
         }
+
+        
     }
 
     // Called when this View is removed from the screen. Save the
