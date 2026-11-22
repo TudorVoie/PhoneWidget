@@ -18,9 +18,7 @@ class PhoneWidgetGarminView extends WatchUi.View {
     function onLayout(dc as Dc) as Void {
     }
 
-    // Called when this View is brought to the foreground. Restore
-    // the state of this View and prepare it to be shown. This includes
-    // loading resources into memory.
+    
     function onShow() as Void {
         var listener = new $.CommListener();
         Communications.transmit("sendinfo", null, listener);
@@ -86,9 +84,7 @@ class PhoneWidgetGarminView extends WatchUi.View {
         
     }
 
-    // Called when this View is removed from the screen. Save the
-    // state of this View here. This includes freeing resources from
-    // memory.
+    
     function onHide() as Void {
         myTimer.stop();
         pornit = 0;

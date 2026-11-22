@@ -186,16 +186,6 @@ class PhoneMonitorService : Service() {
         }
     }
 
-    private fun getwifi() : Boolean {
-        val wifi = applicationContext.getSystemService(WIFI_SERVICE) as WifiManager
-        return wifi.isWifiEnabled
-    }
-
-    private fun togglewifi() {
-        val wifi = applicationContext.getSystemService(WIFI_SERVICE) as WifiManager
-        wifi.isWifiEnabled = !wifi.isWifiEnabled
-    }
-
     private fun sendRingerMode() {
         val mode = getRingerMode()
         if (mode == lastRingerMode) return

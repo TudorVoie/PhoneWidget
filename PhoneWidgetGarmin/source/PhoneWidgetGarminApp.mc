@@ -14,6 +14,7 @@ class PhoneWidgetGarminApp extends Application.AppBase {
 
     function initialize() {
         AppBase.initialize();
+        _phoneMethod = method(:onPhone);
 
         _phoneMethod = method(:onPhone);
         if (Communications has :registerForPhoneAppMessages) {
@@ -31,6 +32,9 @@ class PhoneWidgetGarminApp extends Application.AppBase {
 
     // Return the initial view of your application here
     function getInitialView() as [Views] or [Views, InputDelegates] {
+        if (Communications has :registerForPhoneAppMessages) {
+            Communications.registerForPhoneAppMessages(_phoneMethod);
+        }
         if (Toybox has :Background) {
             Background.registerForTemporalEvent(new Time.Duration(5 * 60));
             if (Background has :registerForPhoneAppMessageEvent) {
@@ -54,12 +58,24 @@ class PhoneWidgetGarminApp extends Application.AppBase {
         var data = msg.data;
 
         if (data != null) {
+            var text = data.toString();
+
             for (var i = (_strings.size() - 1); i > 0; i--) {
                 _strings[i] = _strings[i-1];
             }
-            _strings[0] = data.toString();
+            _strings[0] = text;
+
+            // Persist for the glance
+            if (text.find("BATTERY:") == 0) {
+                var num = text.substring(8, text.length()).toNumber();
+                if (num != null) {
+                    Application.Storage.setValue("battery", num);
+                }
+            } else if (text.find("RINGER:") == 0) {
+                Application.Storage.setValue("ringer", text.substring(7, text.length()));
+            }
         }
-        
+
         WatchUi.requestUpdate();
     }
 
