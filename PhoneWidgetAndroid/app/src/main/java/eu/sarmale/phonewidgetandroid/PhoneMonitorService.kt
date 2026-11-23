@@ -29,6 +29,7 @@ class PhoneMonitorService : Service() {
 
         // Must match the app id / uuid of the app running on the watch
         private const val WATCH_APP_ID = "f7b66f8b-12df-4e2a-8aab-e754bda5bd62"
+        const val ACTION_REQUEST_WATCH_BATTERY = "eu.sarmale.phonewidgetandroid.REQUEST_WATCH_BATTERY"
     }
 
     private lateinit var connectIQ: ConnectIQ
@@ -92,9 +93,20 @@ class PhoneMonitorService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        // START_STICKY tells Android to recreate the service (with a null intent)
-        // if it's killed under memory pressure, so it keeps running indefinitely.
+        if (intent?.action == ACTION_REQUEST_WATCH_BATTERY) {
+            sendToWatch("getwatchbat")
+        }
         return START_STICKY
+    }
+
+    private fun sendToWatch(text: String) {
+        knownDevices.forEach { device ->
+            try {
+                connectIQ.sendMessage(device, myApp, text) { _, _, _ -> }
+            } catch (_: InvalidStateException) {
+            } catch (_: ServiceUnavailableException) {
+            }
+        }
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -130,19 +142,30 @@ class PhoneMonitorService : Service() {
     private fun listenByMyAppEvents(device: IQDevice) {
         try {
             connectIQ.registerForAppEvents(device, myApp) { _, _, message, _ ->
-                //PhoneMonitorState.lastMessage.value = message.joinToString(", ")
-                if(message.joinToString (", ") == "silent") setRingerMode(0)
-                else if(message.joinToString(", ") == "normal") setRingerMode(2)
-                else if(message.joinToString(", ") == "sendinfo") {
-                    lastBattery = -1
-                    lastRingerMode = -1
-                    sendBattery(getCurrentBatteryPercentage())
-                    sendRingerMode()
-                }
-            }
+    val text = message.joinToString(", ")
+    when {
+        text == "silent" -> setRingerMode(0)
+        text == "normal" -> setRingerMode(2)
+        text == "sendinfo" -> resendPhoneInfo()
+        text.startsWith("WATCHBAT:") -> {
+            val pct = text.removePrefix("WATCHBAT:").toIntOrNull()
+            if (pct != null) WatchBatteryWidget.save(applicationContext, pct)
+            // Ceasul nu mai cere "sendinfo" la 5 minute, așa că retrimitem
+            // starea telefonului la fiecare WATCHBAT
+            resendPhoneInfo()
+        }
+    }
+}
         } catch (_: InvalidStateException) {
         } catch (_: ServiceUnavailableException) {
         }
+    }
+
+    private fun resendPhoneInfo() {
+        lastBattery = -1
+        lastRingerMode = -1
+        sendBattery(getCurrentBatteryPercentage())
+        sendRingerMode()
     }
 
     private fun getBatteryPercentage(intent: Intent): Int {

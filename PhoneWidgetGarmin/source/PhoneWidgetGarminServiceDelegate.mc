@@ -11,17 +11,29 @@ class PhoneWidgetGarminServiceDelegate extends System.ServiceDelegate {
         ServiceDelegate.initialize();
     }
 
+    function sendWatchBattery() as Void {
+        var battery = System.getSystemStats().battery.toNumber();
+        Communications.transmit("WATCHBAT:" + battery.toString(), null, new PhoneWidgetGarminBgListener());
+    }
+
     // Every ~5 min: ask the phone for fresh values. The reply wakes
     // onPhoneAppMessage below.
     function onTemporalEvent() as Void {
-        Communications.transmit("sendinfo", null, new PhoneWidgetGarminBgListener());
+        sendWatchBattery();   // doar asta, fără "sendinfo"
     }
 
     // Phone pushed a message (on change, or in reply to "sendinfo")
     function onPhoneAppMessage(msg as Communications.PhoneAppMessage) as Void {
+        
         var data = msg.data;
         if (data != null) {
             var text = data.toString();
+
+            if (text.equals("getwatchbat")) {
+                sendWatchBattery();
+                return; // listener-ul apelează Background.exit după transmisie
+            }
+
             if (text.find("BATTERY:") == 0) {
                 var num = text.substring(8, text.length()).toNumber();
                 if (num != null) {
@@ -33,6 +45,7 @@ class PhoneWidgetGarminServiceDelegate extends System.ServiceDelegate {
         }
         Background.exit(null);
     }
+        
 }
 
 (:background)

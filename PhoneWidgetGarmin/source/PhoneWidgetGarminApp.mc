@@ -16,10 +16,11 @@ class PhoneWidgetGarminApp extends Application.AppBase {
         AppBase.initialize();
         _phoneMethod = method(:onPhone);
 
-        _phoneMethod = method(:onPhone);
+        /*
         if (Communications has :registerForPhoneAppMessages) {
             Communications.registerForPhoneAppMessages(_phoneMethod);
         }
+        */
     }
 
     // onStart() is called on application start up

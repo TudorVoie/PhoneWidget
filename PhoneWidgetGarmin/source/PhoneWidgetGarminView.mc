@@ -20,8 +20,15 @@ class PhoneWidgetGarminView extends WatchUi.View {
 
     
     function onShow() as Void {
-        var listener = new $.CommListener();
-        Communications.transmit("sendinfo", null, listener);
+        sendWatchBattery();
+    }
+
+    function sendWatchBattery() as Void {
+        Communications.transmit(
+            "WATCHBAT:" + System.getSystemStats().battery.toNumber().toString(),
+            null,
+            new $.CommListener()
+        );
     }
 
     var pornit = 0;
@@ -30,9 +37,7 @@ class PhoneWidgetGarminView extends WatchUi.View {
 
     function timerCallback() as Void {
         pornit = 1;
-        // tick = tick + 1;
-        var listener = new $.CommListener();
-        Communications.transmit("sendinfo", null, listener);
+        sendWatchBattery();
         WatchUi.requestUpdate();
     }
 
